@@ -66,6 +66,8 @@ view model =
         , hr [] []
         , table [] (List.map inputView model.inputs)
         , small [] [ text ("Part 1 Total: " ++ String.fromInt (totalFuel model.inputs)) ]
+        , hr [] []
+        , small [] [ text ("Part 2 Total: " ++ String.fromInt (part2 model.inputs)) ]
         ]
 
 
@@ -75,6 +77,8 @@ inputView i =
         [ td [] [ text (String.fromInt i) ]
         , td [] [ text " -> " ]
         , td [] [ text (String.fromInt (fuel i)) ]
+        , td [] [ text " -> " ]
+        , td [] [ text (String.fromInt (extraFuel i)) ]
         ]
 
 
@@ -87,3 +91,21 @@ totalFuel inputs =
 fuel : Int -> Int
 fuel mass =
     floor (toFloat mass / 3) - 2
+
+
+extraFuel : Int -> Int
+extraFuel mass =
+    let
+        one =
+            fuel mass
+    in
+    if one <= 0 then
+        0
+
+    else
+        one + extraFuel one
+
+
+part2 : List Int -> Int
+part2 inputs =
+    List.map extraFuel inputs |> List.sum
