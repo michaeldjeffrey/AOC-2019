@@ -1,13 +1,15 @@
 module Day1 exposing (..)
 
 import Browser
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Css exposing (..)
+import Html
+import Html.Styled as Styled exposing (..)
+import Html.Styled.Attributes exposing (css, href, placeholder, src, type_, value)
+import Html.Styled.Events exposing (..)
 
 
 main =
-    Browser.sandbox { init = init, update = update, view = view }
+    Browser.sandbox { init = init, update = update, view = view >> toUnstyled }
 
 
 type alias Model =
@@ -19,7 +21,19 @@ type alias Model =
 
 init : Model
 init =
-    Model [] 12 0
+    Model
+        [ 54172
+        , 58469
+        , 92948
+        , 143402
+        , 57563
+        , 54532
+        , 68042
+        , 89847
+        , 70872
+        ]
+        12
+        0
 
 
 update : Msg -> Model -> Model
@@ -52,33 +66,69 @@ type Msg
     | AddInput
 
 
-view : Model -> Html Msg
+container : Style
+container =
+    Css.batch
+        [ border3 (px 5) solid (rgb 120 120 120)
+        , width (px 500)
+        , margin auto
+        , padding (rem 1)
+        , displayFlex
+        ]
+
+
+view : Model -> Styled.Html Msg
 view model =
-    Html.form [ onSubmit AddInput ]
-        [ text "Inputs"
-        , input
-            [ type_ "text", placeholder "Number", value (String.fromInt model.single), onInput Single ]
-            []
-        , textarea [ placeholder "inputs", onInput Multiple ] []
-        , hr [] []
-        , text ("Answer:" ++ String.fromInt model.answer)
-        , button [ onClick Calculate ] [ text "Calculate" ]
-        , hr [] []
-        , table [] (List.map inputView model.inputs)
-        , small [] [ text ("Part 1 Total: " ++ String.fromInt (totalFuel model.inputs)) ]
-        , hr [] []
-        , small [] [ text ("Part 2 Total: " ++ String.fromInt (part2 model.inputs)) ]
+    let
+        col =
+            styled div [ flex (int 1) ]
+    in
+    Styled.form [ onSubmit AddInput, css [ container, flexDirection column ] ]
+        [ h1 [] [ text "Day 1" ]
+        , div [ css [ container ] ]
+            [ col []
+                [ text "Inputs"
+                , br [] []
+                , input
+                    [ type_ "text", placeholder "Single", value (String.fromInt model.single), onInput Single ]
+                    []
+                , br [] []
+                , textarea [ placeholder "Multiple", onInput Multiple ] []
+                , hr [] []
+                , Styled.small [] [ text ("Part 1 Total: " ++ prettyNumber (totalFuel model.inputs)) ]
+                , hr [] []
+                , Styled.small [] [ text ("Part 2 Total: " ++ prettyNumber (part2 model.inputs)) ]
+                ]
+            , col []
+                [ Styled.table [ css [] ]
+                    [ thead []
+                        (let
+                            hcell =
+                                styled th [ padding (px 5) ]
+                         in
+                         [ hcell [] [ text "Initial" ]
+                         , hcell [] [ text "part 1" ]
+                         , hcell [] [ text "part 2" ]
+                         ]
+                        )
+                    , tbody []
+                        (List.map inputView model.inputs)
+                    ]
+                ]
+            ]
         ]
 
 
 inputView : Int -> Html Msg
 inputView i =
+    let
+        cell =
+            styled td [ borderTop3 (px 1) solid (rgb 0 0 0), padding (px 5) ]
+    in
     tr []
-        [ td [] [ text (String.fromInt i) ]
-        , td [] [ text " -> " ]
-        , td [] [ text (String.fromInt (fuel i)) ]
-        , td [] [ text " -> " ]
-        , td [] [ text (String.fromInt (extraFuel i)) ]
+        [ cell [] [ text (prettyNumber i) ]
+        , cell [] [ text (prettyNumber (fuel i)) ]
+        , cell [] [ text (prettyNumber (extraFuel i)) ]
         ]
 
 
@@ -109,3 +159,27 @@ extraFuel mass =
 part2 : List Int -> Int
 part2 inputs =
     List.map extraFuel inputs |> List.sum
+
+
+prettyNumber : Int -> String
+prettyNumber num =
+    String.join "," (splitThousands (String.fromInt num))
+
+
+splitThousands : String -> List String
+splitThousands integers =
+    let
+        reversedSplitThousands : String -> List String
+        reversedSplitThousands value =
+            if String.length value > 3 then
+                value
+                    |> String.dropRight 3
+                    |> reversedSplitThousands
+                    |> (::) (String.right 3 value)
+
+            else
+                [ value ]
+    in
+    integers
+        |> reversedSplitThousands
+        |> List.reverse
