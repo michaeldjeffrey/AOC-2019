@@ -20,12 +20,29 @@ type Msg
     = Input String
     | RunCommand Command
     | Step
+    | StepToFinish
     | ReplaceInitial
 
 
-getCommand : Int -> Array Command -> Command
-getCommand cursor commands =
-    Maybe.withDefault DefaultProvided (Array.get cursor commands)
+getCommand : Model -> Command
+getCommand model =
+    Maybe.withDefault DefaultProvided (Array.get model.cursor model.commands)
+
+
+stepCursor : Model -> Model
+stepCursor model =
+    { model | cursor = model.cursor + 1 }
+
+
+fillWithPresets : Int -> Int -> Array Int -> Array Int
+fillWithPresets noun verb memory =
+    memory
+        |> Array.set 1 noun
+        |> Array.set 2 verb
+
+
+part1Preset =
+    fillWithPresets 12 2
 
 
 update : Msg -> Model -> Model
@@ -34,14 +51,27 @@ update msg model =
         ReplaceInitial ->
             let
                 newCleaned =
-                    model.cleaned
-                        |> Array.set 1 12
-                        |> Array.set 2 2
+                    part1Preset model.cleaned
             in
             { model | cleaned = newCleaned }
 
         Step ->
-            update (RunCommand (getCommand model.cursor model.commands)) { model | cursor = model.cursor + 1 }
+            update (RunCommand (getCommand model)) (stepCursor model)
+
+        StepToFinish ->
+            let
+                next =
+                    getCommand model
+
+                run =
+                    update (RunCommand next) (stepCursor model)
+            in
+            case next of
+                Finished ->
+                    model
+
+                _ ->
+                    update StepToFinish run
 
         Input input ->
             reCommand { model | input = input, cleaned = fromList <| read input }
@@ -95,6 +125,7 @@ view model =
             [ itext model.cursor
             , text ("(" ++ String.fromInt (getOrZero (model.cursor * 4) model.cleaned) ++ ")")
             , button [ onClick Step ] [ text "Step" ]
+            , button [ onClick StepToFinish ] [ text "Finish" ]
             , button [ onClick ReplaceInitial ] [ text "Replace initial values" ]
             ]
         , textarea
