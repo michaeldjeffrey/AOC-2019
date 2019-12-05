@@ -20,14 +20,11 @@ part2 _ =
         |> List.length
 
 
-intToList : Int -> List Char
-intToList =
-    String.fromInt >> String.toList
-
-
 listOfInt : Int -> List Int
 listOfInt =
-    intToList >> List.filterMap (String.fromChar >> String.toInt)
+    String.fromInt
+        >> String.toList
+        >> List.filterMap (String.fromChar >> String.toInt)
 
 
 ilargerMatchingGroups : Int -> Bool
@@ -93,11 +90,6 @@ validPart2Password input =
             listOfInt input
     in
     containsDouble loi && alwaysIncreases loi && largerMatchingGroup loi
-
-
-unsafeInt : String -> Int
-unsafeInt input =
-    Maybe.withDefault 0 (String.toInt input)
 
 
 group : List a -> List (List a)
