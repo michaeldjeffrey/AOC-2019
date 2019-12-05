@@ -16,8 +16,12 @@ type alias Path =
     { dir : Dir, amount : Int }
 
 
-type alias Point =
+type alias SimplePoint =
     ( Int, Int )
+
+
+type alias Point =
+    ( ( Int, Int ), Int )
 
 
 type alias Wire =
@@ -32,15 +36,57 @@ part1 one two =
         |> List.minimum
 
 
-manHattanDistance : Point -> Int
+part2 : String -> String -> Maybe Int
+part2 one two =
+    let
+        a =
+            wire one
+
+        b =
+            wire two
+
+        is =
+            wireIntersections a b
+
+        aDict =
+            wireToDict a
+
+        bDict =
+            wireToDict b
+
+        toDistances : SimplePoint -> ( Int, Int )
+        toDistances point =
+            ( unsafeGetFromDict point aDict, unsafeGetFromDict point bDict )
+
+        distances =
+            List.map toDistances (Set.toList is)
+    in
+    distances
+        |> List.map manHattanDistance
+        |> List.minimum
+
+
+unsafeGetFromDict : SimplePoint -> Dict SimplePoint Int -> Int
+unsafeGetFromDict k d =
+    Dict.get k d |> Maybe.withDefault 0
+
+
+manHattanDistance : SimplePoint -> Int
 manHattanDistance ( x, y ) =
     abs x + abs y
 
 
 wire : String -> Set Point
 wire input =
-    wireHelper (readDirs input) ( 0, 0 )
+    wireHelper (readDirs input) ( ( 0, 0 ), 0 )
         |> Set.fromList
+
+
+wireToDict : Set Point -> Dict SimplePoint Int
+wireToDict points =
+    points
+        |> Set.toList
+        |> Dict.fromList
 
 
 wireHelper : List Path -> Point -> Wire
@@ -57,14 +103,19 @@ wireHelper dirs startingPoint =
             one ++ wireHelper rest (unsafeEnd one)
 
 
-wireIntersections : Set Point -> Set Point -> Set Point
-wireIntersections =
-    Set.intersect
+toSimplePoint : Point -> SimplePoint
+toSimplePoint ( ( x, y ), _ ) =
+    ( x, y )
+
+
+wireIntersections : Set Point -> Set Point -> Set SimplePoint
+wireIntersections one two =
+    Set.intersect (Set.map toSimplePoint one) (Set.map toSimplePoint two)
 
 
 unsafeEnd : List Point -> Point
 unsafeEnd l =
-    Maybe.withDefault ( 0, 0 ) (List.head <| List.reverse l)
+    Maybe.withDefault ( ( 0, 0 ), 0 ) (List.head <| List.reverse l)
 
 
 travel : Path -> Point -> List Point
@@ -85,22 +136,22 @@ travel path startingPoint =
 
 
 movePoint : Dir -> Point -> Point
-movePoint dir ( x, y ) =
+movePoint dir ( ( x, y ), distance ) =
     case dir of
         Up ->
-            ( x, y + 1 )
+            ( ( x, y + 1 ), distance + 1 )
 
         Down ->
-            ( x, y - 1 )
+            ( ( x, y - 1 ), distance + 1 )
 
         Left ->
-            ( x - 1, y )
+            ( ( x - 1, y ), distance + 1 )
 
         Right ->
-            ( x + 1, y )
+            ( ( x + 1, y ), distance + 1 )
 
         Invalid ->
-            ( x, y )
+            ( ( x, y ), distance + 1 )
 
 
 dec : Path -> Path

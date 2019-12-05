@@ -1,6 +1,7 @@
 module Example exposing (..)
 
-import Day3 exposing (Dir, part1, travel, wire, wireIntersections)
+import Day3 exposing (Dir, part1, part2, travel, wire, wireIntersections, wireToDict)
+import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Set exposing (Set)
@@ -8,7 +9,7 @@ import Test exposing (..)
 
 
 origin =
-    ( 0, 0 )
+    ( ( 0, 0 ), 0 )
 
 
 travelUp amount =
@@ -46,7 +47,17 @@ actualInput2 =
 suite : Test
 suite =
     describe "Day3"
-        [ describe "part1"
+        [ describe "part2"
+            [ test "small input" <|
+                \_ -> Expect.equal (part2 "R8,U5,L5,D3" "U7,R6,D4,L4") (Just 30)
+            , test "test input 1" <|
+                \_ -> Expect.equal (part2 testWire1Input testWire2Input) (Just 610)
+            , test "test input 2" <|
+                \_ -> Expect.equal (part2 testWire3Input testWire4Input) (Just 410)
+            , test "actual input" <|
+                \_ -> Expect.equal (part2 actualInput1 actualInput2) (Just 35038)
+            ]
+        , describe "part1"
             [ test "small input" <|
                 \_ -> Expect.equal (part1 "R8,U5,L5,D3" "U7,R6,D4,L4") (Just 6)
             , test "test input 1" <|
@@ -86,47 +97,40 @@ suite =
             ]
         , describe "make wire"
             [ test "move up 2" <|
-                \_ -> Expect.equal (wire "U2") (Set.fromList [ ( 0, 1 ), ( 0, 2 ) ])
+                \_ -> Expect.equal (wire "U2") (Set.fromList [ ( ( 0, 1 ), 1 ), ( ( 0, 2 ), 2 ) ])
             , test "move up 1" <|
-                \_ -> Expect.equal (wire "U1") (Set.fromList [ ( 0, 1 ) ])
+                \_ -> Expect.equal (wire "U1") (Set.fromList [ ( ( 0, 1 ), 1 ) ])
             , test "move up 1, right 1" <|
-                \_ -> Expect.equal (wire "U1,R1") (Set.fromList [ ( 0, 1 ), ( 1, 1 ) ])
+                \_ -> Expect.equal (wire "U1,R1") (Set.fromList [ ( ( 0, 1 ), 1 ), ( ( 1, 1 ), 2 ) ])
             , test "move up 2, right 2" <|
                 \_ ->
                     Expect.equal (wire "U2,R2")
                         (Set.fromList
-                            [ ( 0, 1 )
-                            , ( 0, 2 )
-                            , ( 1, 2 )
-                            , ( 2, 2 )
+                            [ ( ( 0, 1 ), 1 )
+                            , ( ( 0, 2 ), 2 )
+                            , ( ( 1, 2 ), 3 )
+                            , ( ( 2, 2 ), 4 )
                             ]
                         )
-            , test "big lists have the right amount" <|
-                \_ ->
-                    let
-                        w =
-                            wire testWire1Input
-                    in
-                    Expect.equal (Set.size w) 479
             ]
         , describe "travel"
             [ test "move up 1" <|
                 \_ ->
                     Expect.equal (travelUp 1)
-                        [ ( 0, 1 )
+                        [ ( ( 0, 1 ), 1 )
                         ]
             , test "move up 2" <|
                 \_ ->
                     Expect.equal (travelUp 2)
-                        [ ( 0, 1 )
-                        , ( 0, 2 )
+                        [ ( ( 0, 1 ), 1 )
+                        , ( ( 0, 2 ), 2 )
                         ]
             , test "move right 3" <|
                 \_ ->
                     Expect.equal (travelRight 3)
-                        [ ( 1, 0 )
-                        , ( 2, 0 )
-                        , ( 3, 0 )
+                        [ ( ( 1, 0 ), 1 )
+                        , ( ( 2, 0 ), 2 )
+                        , ( ( 3, 0 ), 3 )
                         ]
             ]
         ]
